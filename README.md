@@ -6,7 +6,7 @@ TODO: add face identity sensor
 下载插件, 并将 baidu_face.py 放置于 custom_components/sensor 文件夹下
 
 ## 配置示例 :
-```bash
+```YAML
 sensor:
   - platform : baidu_face
     #从百度ai开放平台人脸识别应用中获取
@@ -21,4 +21,4 @@ sensor:
     scan_interval: 2
 ```
 
-![演示](https://github.com/893399065/ha-baiduface/blob/master/gif/demo.gif)
+![演示](https://raw.githubusercontent.com/Caffreyfans/baidu_identity/master/gif/demo.gif)
