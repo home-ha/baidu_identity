@@ -17,6 +17,8 @@ sensor:
     camera_entity_id: "*****"    
     # token
     token: "****************"
+    # 可以替换成自己喜欢的图片(支持网络图片),也可以不填
+    # pic_url: ""
     #刷新间隔(1~30s)
     scan_interval: 2
 ```
