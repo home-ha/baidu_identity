@@ -34,7 +34,7 @@ DEFAULT_PIC_URL = "https://dev.tencent.com/u/Caffreyfans/p/public-sources/git/ra
 DEFAULT_PORT = 8123
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, deault=DEFAULT_NAME): cv.string,
+    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
     vol.Required(CONF_APIKEY): cv.string,
     vol.Required(CONF_SECRETKEY): cv.string,
     vol.Required(CONF_GROUP_ID): cv.string,
