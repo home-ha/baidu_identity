@@ -9,6 +9,7 @@ TODO: add face identity sensor
 ```YAML
 sensor:
   - platform : baidu_face
+    # 必须项
     #从百度ai开放平台人脸识别应用中获取
     api_key : "*************"
     secret_key: "***********"
@@ -17,10 +18,12 @@ sensor:
     camera_entity_id: "*****"    
     # token
     token: "****************"
-    # 可以替换成自己喜欢的图片(支持网络图片),也可以不填
-    # pic_url: ""
     #刷新间隔(1~30s)
     scan_interval: 2
+    # 可选项
+    # name: "***************"
+    # port: 8123
+    # pic_url: "网络、本地图片地址"
 ```
 
 ![演示](https://raw.githubusercontent.com/Caffreyfans/baidu_identity/master/gif/demo.gif)
