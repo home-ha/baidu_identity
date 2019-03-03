@@ -1,4 +1,4 @@
-""" 利用百度人脸识别API进行人脸识别 """
+""" 利用百度人脸识别 API v2 进行人脸识别 """
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
@@ -17,7 +17,7 @@ ATTR_UID = 'uid'
 ATTR_USER_INFO = 'user_info'
 ATTR_FACELIVENESS = "faceliveness"
 
-
+CONF_NAME = 'name'
 CONF_APIKEY = 'api_key'
 CONF_SECRETKEY = 'secret_key'
 CONF_GROUP_ID = 'group_id'
@@ -27,24 +27,28 @@ CONF_PIC_URL = 'pic_url'
 CONF_TOKEN = 'token'
 
 
+PASS_SCORE = 80
+THRESHOLD = 0.393241
+DEFAULT_NAME = "ren lian shi bie"
+DEFAULT_PIC_URL = "https://dev.tencent.com/u/Caffreyfans/p/public-sources/git/raw/master/1.gif"
+DEFAULT_PORT = 8123
+
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+    vol.Optional(CONF_NAME, deault=DEFAULT_NAME): cv.string,
     vol.Required(CONF_APIKEY): cv.string,
     vol.Required(CONF_SECRETKEY): cv.string,
     vol.Required(CONF_GROUP_ID): cv.string,
-    vol.Optional(CONF_PORT, default="8123"): cv.string,
+    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
     vol.Required(CONF_CAMERA_ENTITY_ID): cv.string,
-    vol.Optional(CONF_PIC_URL, default="https://dev.tencent.com/u/Caffreyfans/p/public-sources/git/raw/master/1.gif"): cv.string,
+    vol.Optional(CONF_PIC_URL, default=DEFAULT_PIC_URL): cv.string,
     vol.Required(CONF_TOKEN): cv.string
 })
 
 
-PASS_SCORE = 80
-THRESHOLD = 0.393241
-
-
 def setup_platform(hass, config, add_devices,
 	               discovery_info=None):
-    """ 添加sensor类实例 """
+    """ add sensor components """
+    name = config.get(CONF_NAME)
     api_key = config.get(CONF_APIKEY)
     secret_key = config.get(CONF_SECRETKEY)
     group_id = config.get(CONF_GROUP_ID)
@@ -53,7 +57,7 @@ def setup_platform(hass, config, add_devices,
     pic_url = config.get(CONF_PIC_URL)
     token = config.get(CONF_TOKEN)
 
-    add_devices([FaceSensor(port, camera_entity_id, api_key, secret_key, group_id, pic_url, token)])
+    add_devices([FaceSensor(name, port, camera_entity_id, api_key, secret_key, group_id, pic_url, token)])
 
 
 class FaceSensor(Entity):
@@ -62,7 +66,8 @@ class FaceSensor(Entity):
 	suffix = "tmp.jpg"
 	recognise = {}
 
-	def __init__(self, port, camera_entity_id, api_key, secret_key, group_id, pic_url, token):
+	def __init__(self, name, port, camera_entity_id, api_key, secret_key, group_id, pic_url, token):
+		self._name = name
 		self._state = None
 		self._port = port
 		self._camera_entity_id = camera_entity_id
@@ -73,21 +78,24 @@ class FaceSensor(Entity):
 		self._token = token
 		self.exists_path()
 
+		
 	@property
 	def name(self):
-		return "人脸识别"
+		return self._name
 
+	
 	@property
 	def entity_picture(self):
 		if (self._state == True):
-			# self.download_picture()
 			return '/local/images/' + FaceSensor.suffix
 		else:
 			return self._pic_url
 
+		
 	@property
 	def state(self):
 		return self._state
+	
 	
 	@property
 	def device_state_attributes(self):
@@ -101,27 +109,28 @@ class FaceSensor(Entity):
 					ATTR_FACELIVENESS : FaceSensor.recognise["ext_info"]["faceliveness"]
 				}
 		return {
-			ATTR_SCORES : "null",
-			ATTR_UID : "null",
-			ATTR_GROUP_ID : "null",
-			ATTR_USER_INFO : "null",
-			ATTR_FACELIVENESS : "null"
+			ATTR_SCORES : 'null',
+			ATTR_UID : 'null',
+			ATTR_GROUP_ID : 'null',
+			ATTR_USER_INFO : 'null',
+			ATTR_FACELIVENESS : 'null'
 		}
 
+	
 	def update(self):
 		self.download_picture()
 		ret = self.identify_face()
 		if (ret == True):
-			# self.detect_face()
 			self._state = True
 		else:
 			self._state = False
 
+			
 	def download_picture(self):
-		""" 从ha里下载图片 """
+		""" download picture from homeassistant """
 		t = int(round(time.time()))
-		url = 'http://127.0.0.1:%s/api/camera_proxy/%s?time=%d -o image.jpg'%(self._port, self._camera_entity_id, t)
-		headers = {'Authorization': 'Bearer %s'%(self._token),
+		url = "http://127.0.0.1:%s/api/camera_proxy/%s?time=%d -o image.jpg"%(self._port, self._camera_entity_id, t)
+		headers = {'Authorization': "Bearer %s"%(self._token),
 					'content-type': 'application/json'}
 		response = requests.get(url, headers=headers)
 		path = FaceSensor.savePath + FaceSensor.suffix
@@ -135,13 +144,13 @@ class FaceSensor(Entity):
 
 
 	def get_token(self):
-		grant_type = "client_credentials"
+		grant_type = 'client_credentials'
 		request_url = "https://aip.baidubce.com/oauth/2.0/token"
-		params = {"client_id" : self._api_key, "client_secret" : self._secret_key, "grant_type" : grant_type}
+		params = {'client_id' : self._api_key, "client_secret" : self._secret_key, 'grant_type' : grant_type}
 		response = requests.post(url=request_url, params=params)
 		access_json = json.loads(response.text)
 		if ("access_token" in access_json):
-			return access_json["access_token"]
+			return access_json['access_token']
 		else:
 			_LOGGER.error(response.text)
 			return None
@@ -176,11 +185,11 @@ class FaceSensor(Entity):
 		request_url = "https://aip.baidubce.com/rest/2.0/face/v2/identify"
 		pic_path = FaceSensor.savePath + FaceSensor.suffix
 		img = self.get_base64_file_content(pic_path)	
-		params = {"access_token" : self.get_token()}
+		params = {'access_token' : self.get_token()}
 		data = {
-			"image" : img,
-			"group_id" : self._group_id,
-			"ext_fields" : "faceliveness"
+			'image' : img,
+			'group_id' : self._group_id,
+			'ext_fields' : 'faceliveness'
 			}
 		ret = requests.post(url=request_url, params=params, data=data)	
 		ret_json = json.loads(ret.text)
@@ -209,4 +218,3 @@ class FaceSensor(Entity):
 			if not (os.path.exists(docker_path)):				
 				os.makedirs(docker_path)
 			FaceSensor.savePath = docker_path
-			
