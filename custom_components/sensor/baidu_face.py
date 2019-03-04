@@ -68,14 +68,15 @@ class FaceSensor(Entity):
 
 	def __init__(self, name, port, camera_entity_id, api_key, secret_key, group_id, pic_url, token):
 		self._name = name
-		self._state = None
-		self._port = port
+		self._state = False
+		self._port = str(port)
 		self._camera_entity_id = camera_entity_id
 		self._api_key = api_key
 		self._secret_key = secret_key
 		self._group_id = group_id
 		self._pic_url = pic_url
 		self._token = token
+		self._should_poll = True
 		self.exists_path()
 
 		
@@ -96,7 +97,7 @@ class FaceSensor(Entity):
 	def state(self):
 		return self._state
 	
-	
+
 	@property
 	def device_state_attributes(self):
 		if (self._state == True):
@@ -152,7 +153,8 @@ class FaceSensor(Entity):
 		if ("access_token" in access_json):
 			return access_json['access_token']
 		else:
-			_LOGGER.error(response.text)
+			_LOGGER.error("There is some wrong about your baidu api settings")
+			self._should_poll = False
 			return None
 
 
