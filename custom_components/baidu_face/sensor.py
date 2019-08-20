@@ -33,10 +33,6 @@ CONF_PIC_URL = 'pic_url'
 CONF_SECRETKEY = 'secret_key'
 CONF_TOKEN = 'token'
 
-
-
-
-
 DEFAULT_NAME = "ren lian shi bie"
 DEFAULT_PIC_URL = 'https://dev.tencent.com/u/Caffreyfans/p/public-sources/git/raw/master/1.gif'
 DEFAULT_PORT = 8123
@@ -56,7 +52,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_SECRETKEY): cv.string,
     vol.Required(CONF_TOKEN): cv.string,
 })
-
 
 def setup_platform(hass, config, add_devices,
 	               discovery_info=None):
@@ -111,7 +106,6 @@ class FaceSensor(Entity):
 	def device_state_attributes(self):
 		return ATTR_LIST
 
-	
 	def update(self):
 		save_path = self._save_path + "tmp.jpg"
 		self.download_picture(save_path)
@@ -120,15 +114,26 @@ class FaceSensor(Entity):
 			self._state = True
 		else:
 			self._state = False
-
-			
+		
 	def download_picture(self, savePath):
 		""" download picture from homeassistant """
+		from http import HTTPStatus
 		t = int(round(time.time()))
-		url = "http://127.0.0.1:{}/api/camera_proxy/{}?time={} -o image.jpg".format(self._port, self._camera_entity_id, t)
+		http_url = "http://127.0.0.1:{}".format(self._port)
+		https_url = "https://127.0.0.1:{}".format(self._port)
+		url = http_url
+		try:
+			status_code = requests.get(url).status_code
+		except:
+			status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+		if status_code == HTTPStatus.OK:
+			url = http_url
+		else:
+			url = https_url
+		camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(url, self._camera_entity_id, t)
 		headers = {'Authorization': "Bearer {}".format(self._token),
 					'content-type': 'application/json'}
-		response = requests.get(url, headers=headers)
+		response = requests.get(camera_url, headers=headers)
 		with open(savePath, 'wb') as fp:
 		    fp.write(response.content)
 
@@ -147,7 +152,6 @@ class FaceSensor(Entity):
 		else:
 			_LOGGER.error("There is some wrong about your baidu api settings")
 			return None
-
 
 	def face_searching(self, picPath):
 		request_url = "https://aip.baidubce.com/rest/2.0/face/v3/search"
@@ -170,7 +174,8 @@ class FaceSensor(Entity):
 					ATTR_LIST[key] = ret_json['result']['user_list'][0][key]
 				self._pic_name = ATTR_LIST[ATTR_UID] + ".jpg"
 				save_path = self._save_path + self._pic_name
-				self.download_picture(save_path)
+				import shutil
+				shutil.copyfile(picPath, save_path)
 				return True
 		return False
 
@@ -182,7 +187,7 @@ class FaceSensor(Entity):
 		path_list = [docker_path, hassbian_path, raspbian_path]
 		for path in path_list:
 			if (os.path.exists(path)):
-				path = path + "/www/images"
+				path = path + "/www/images/"
 				if not (os.path.exists(path)):
 					os.makedirs(path)
 				self._save_path = path
